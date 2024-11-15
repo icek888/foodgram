@@ -1,21 +1,15 @@
-# Основные библиотеки
 Django
 djangorestframework
 djangorestframework-simplejwt
 djoser
 django-filter
 
-# Работа с изображениями
 pillow
-# Документация API
 drf-yasg
 
-# Запуск в production
 gunicorn
-
-# Подключение к PostgreSQL
+L
 psycopg2-binary
-
-# Прочие полезные зависимости
+django-colorfield
 PyJWT
 requests
