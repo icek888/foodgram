@@ -2,21 +2,20 @@
 Django
 djangorestframework
 djangorestframework-simplejwt
-djoser==2.2.3
+djoser
 django-filter
 
 # Работа с изображениями
-pillow==10.4.0
-
+pillow
 # Документация API
-drf-yasg==1.21.7
+drf-yasg
 
 # Запуск в production
-gunicorn==23.0.0
+gunicorn
 
 # Подключение к PostgreSQL
-psycopg2-binary==2.9.9
+psycopg2-binary
 
 # Прочие полезные зависимости
-PyJWT==2.9.0
-requests==2.32.3
+PyJWT
+requests
