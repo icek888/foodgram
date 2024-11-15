@@ -175,7 +175,7 @@ class RecipeSerializer(serializers.ModelSerializer):
                 Ingredient.objects.get(id=ingredient['id'])
             except Ingredient.DoesNotExist:
                 raise serializers.ValidationError(
-                    {'ingredients': f'Ингредиент с id {ingredient["id"]} не существует.'}
+                    {f'Ингредиент с id{ingredient["id"]} не существует.'}
                 )
 
         tags = data.get('tags')
@@ -203,7 +203,7 @@ class RecipeSerializer(serializers.ModelSerializer):
             amount = ingredient.get('amount')
             if amount is None or int(amount) <= 0:
                 raise serializers.ValidationError({
-                    'ingredients': 'Количество ингредиента должно быть больше 0.'
+                    'Количество ингредиента должно быть больше 0.'
                 })
 
         image = data.get('image')
