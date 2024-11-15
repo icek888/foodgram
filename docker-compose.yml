@@ -16,7 +16,7 @@ services:
       - "5432:5432"
   
   backend:
-    image: icewind777/foodgram-backend
+    image: icewind777/foodgram_backend
     build: ./backend
     env_file: 
       - .env
@@ -27,7 +27,7 @@ services:
       - db
 
   frontend:
-    image: icewind777/foodgram-frontend
+    image: icewind777/foodgram_frontend
     build: ./frontend
     volumes:
       - ./frontend/build:/app/result_build/
