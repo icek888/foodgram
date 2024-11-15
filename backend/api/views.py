@@ -240,8 +240,7 @@ class CustomUserViewSet(UserViewSet):
     @action(
         detail=True,
         methods=['post', 'delete'],
-        permission_classes=[permissions.IsAuthenticated]
-        )
+        permission_classes=[permissions.IsAuthenticated])
     def subscribe(self, request, id):
         """Создает или удаляет подписку текущего пользователя
         на выбранного автора.
