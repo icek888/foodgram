@@ -1,6 +1,6 @@
 from django.db.models import Sum
 from django_filters.rest_framework import DjangoFilterBackend
-from django.shortcuts import HttpResponse, get_object_or_404
+from django.shortcuts import HttpResponse
 from django.contrib.auth import get_user_model
 
 from rest_framework import status, viewsets, permissions
@@ -231,7 +231,9 @@ class CustomUserViewSet(UserViewSet):
             methods=['get'],
             permission_classes=[permissions.IsAuthenticated])
     def me(self, request):
-        """Возвращает данные текущего пользователя (только для авторизованных)."""
+        """Возвращает данные текущего пользователя
+        (только для авторизованных).
+        """
         serializer = self.get_serializer(request.user)
         return Response(serializer.data, status=status.HTTP_200_OK)
 

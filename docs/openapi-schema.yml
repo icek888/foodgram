@@ -1338,7 +1338,7 @@ components:
 
   securitySchemes:
     Token:
-      description: 'Авторизация по токену. <br>
+      description: 'Авторизация по токену. <br>'
       Все запросы от имени пользователя должны выполняться с заголовком "Authorization: Token TOKENVALUE"'
       type: http
       scheme: token
