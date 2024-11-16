@@ -3,10 +3,8 @@ djangorestframework
 djangorestframework-simplejwt
 djoser
 django-filter
-
 pillow
 drf-yasg
-
 gunicorn
 L
 psycopg2-binary
