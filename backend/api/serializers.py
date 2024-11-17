@@ -4,6 +4,7 @@ from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
 from djoser.serializers import UserSerializer
 
+from foodgram import settings
 from users.models import CustomUser
 from recipes.models import (
     Tag,
@@ -311,7 +312,9 @@ class SubscriptionReadSerializer(CustomUserSerializer):
     def get_recipes(self, obj):
         """Возвращает рецепты автора с учетом параметра `recipes_limit`."""
         request = self.context.get('request')
-        recipes_limit = request.query_params.get('recipes_limit')
+        recipes_limit = request.query_params.get(
+            'recipes_limit', settings.REST_FRAMEWORK['PAGE_SIZE']
+            )
         recipes = obj.recipes.all()
 
         if recipes_limit and recipes_limit.isdigit():

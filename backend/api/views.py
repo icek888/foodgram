@@ -288,10 +288,6 @@ class CustomUserViewSet(UserViewSet):
         user = request.user
         authors = CustomUser.objects.filter(subscribing__user=user)
 
-        limit = request.query_params.get('limit')
-        if limit and limit.isdigit():
-            authors = authors[:int(limit)]
-
         serializer = SubscriptionReadSerializer(
             authors,
             context={'request': request},
