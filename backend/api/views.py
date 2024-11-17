@@ -281,16 +281,14 @@ class CustomUserViewSet(UserViewSet):
             methods=['get'])
     def subscriptions(self, request):
         """
-        Возвращает список всех авторов,
+        Возвращает список всех авторов, 
         на которых подписан текущий пользователь,
         с учетом параметра `limit`.
         """
         user = request.user
         authors = CustomUser.objects.filter(subscribing__user=user)
 
-        self.pagination_class = PageLimitPagination
         paged_queryset = self.paginate_queryset(authors)
-
         if paged_queryset is not None:
             serializer = SubscriptionReadSerializer(
                 paged_queryset,
@@ -305,7 +303,6 @@ class CustomUserViewSet(UserViewSet):
             many=True
         )
         return Response(serializer.data)
-
 
     @action(methods=['PUT', 'DELETE'], detail=False,
             permission_classes=[permissions.IsAuthenticated],
