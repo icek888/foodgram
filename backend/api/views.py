@@ -288,14 +288,9 @@ class CustomUserViewSet(UserViewSet):
         user = request.user
         authors = CustomUser.objects.filter(subscribing__user=user)
 
-        paged_queryset = self.paginate_queryset(authors)
-        if paged_queryset is not None:
-            serializer = SubscriptionReadSerializer(
-                paged_queryset,
-                context={'request': request},
-                many=True
-            )
-            return self.get_paginated_response(serializer.data)
+        limit = request.query_params.get('limit')
+        if limit and limit.isdigit():
+            authors = authors[:int(limit)]
 
         serializer = SubscriptionReadSerializer(
             authors,
