@@ -41,5 +41,5 @@ class RecipeFilter(filters.FilterSet):
     def filter_is_in_shopping_cart(self, queryset, name, value):
         """Фильтрация по рецептам в корзине покупок."""
         if value and self.request.user.is_authenticated:
-            return queryset.filter(shopping_cart__user=self.request.user)
+            return queryset.filter(cart__user=self.request.user)
         return queryset
