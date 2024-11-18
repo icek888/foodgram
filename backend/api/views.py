@@ -18,7 +18,7 @@ from recipes.models import (
     Favorite,
     Subscription
 )
-from api.pagination import PageLimitPagination, SubRecipeLimitPagination
+from api.pagination import PageLimitPagination
 from api.utils import create_object, delete_object
 from api.filters import RecipeFilter
 from api.permissions import IsOwnerOrReadOnly
@@ -287,6 +287,15 @@ class CustomUserViewSet(UserViewSet):
         """
         user = request.user
         authors = CustomUser.objects.filter(subscribing__user=user)
+
+        page = self.paginate_queryset(authors)
+        if page is not None:
+            serializer = SubscriptionReadSerializer(
+                page,
+                context={'request': request},
+                many=True
+            )
+            return self.get_paginated_response(serializer.data)
 
         serializer = SubscriptionReadSerializer(
             authors,
