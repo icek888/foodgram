@@ -17,9 +17,11 @@ def create_object(request, pk, serializer_in, serializer_out, model):
     target_obj = get_object_or_404(model, id=pk)
 
     # Подготавливаем данные в зависимости от типа модели
-    data = {
-        'user': user_id, 'recipe': target_obj.id
-        } if model is Recipe else {'user': user_id, 'author': target_obj.id}
+    data = (
+        {'user': user_id, 'recipe': target_obj.id}
+        if model is Recipe
+        else {'user': user_id, 'author': target_obj.id}
+    )
 
     serializer = serializer_in(data=data)
     serializer.is_valid(raise_exception=True)

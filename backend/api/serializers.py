@@ -87,8 +87,7 @@ class IngredientRecipeGetSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(source='ingredient.id')
     name = serializers.CharField(source='ingredient.name')
     measurement_unit = serializers.CharField(
-        source='ingredient.measurement_unit'
-        )
+        source='ingredient.measurement_unit')
 
     class Meta:
         model = IngredientRecipe
@@ -189,8 +188,7 @@ class RecipeSerializer(serializers.ModelSerializer):
         for tag in tags:
             if tag in unique_tags:
                 raise serializers.ValidationError(
-                    {'tags': 'Теги не могут повторяться.'}
-                    )
+                    {'tags': 'Теги не могут повторяться.'})
             unique_tags.add(tag)
 
         unique_ingredients = set()
@@ -300,21 +298,21 @@ class SubscriptionSerializer(serializers.ModelSerializer):
 
 
 class SubscriptionReadSerializer(CustomUserSerializer):
-    """Сериализатор для отображения подписок с 
+    """Сериализатор для отображения подписок с
     поддержкой ограничения на количество рецептов."""
     recipes = serializers.SerializerMethodField()
     recipes_count = serializers.SerializerMethodField()
 
     class Meta:
         model = CustomUser
-        fields = CustomUserSerializer.Meta.fields + ('recipes', 'recipes_count')
+        fields = CustomUserSerializer.Meta.fields + ('recipes',
+                                                     'recipes_count')
 
     def get_recipes(self, obj):
         """Возвращает рецепты автора с учетом параметра `recipes_limit`."""
         request = self.context.get('request')
         recipes_limit = request.query_params.get(
-            'recipes_limit', settings.REST_FRAMEWORK['PAGE_SIZE']
-            )
+            'recipes_limit', settings.REST_FRAMEWORK['PAGE_SIZE'])
         recipes = obj.recipes.all()
 
         if recipes_limit and recipes_limit.isdigit():

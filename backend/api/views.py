@@ -129,8 +129,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         except Recipe.DoesNotExist:
             return Response(
                 {"detail": "Рецепт не найден."},
-                status=status.HTTP_404_NOT_FOUND
-                )
+                status=status.HTTP_404_NOT_FOUND)
 
         if not Favorite.objects.filter(user=request.user,
                                        recipe=recipe).exists():
@@ -281,7 +280,7 @@ class CustomUserViewSet(UserViewSet):
             methods=['get'])
     def subscriptions(self, request):
         """
-        Возвращает список всех авторов, 
+        Возвращает список всех авторов,
         на которых подписан текущий пользователь,
         с учетом параметра `limit`.
         """
