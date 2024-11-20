@@ -1,4 +1,5 @@
 from django_filters import rest_framework as filters
+
 from recipes.models import Recipe, Tag
 
 
@@ -22,6 +23,11 @@ class RecipeFilter(filters.FilterSet):
         method='filter_is_in_shopping_cart',
         label='Фильтр по корзине покупок'
     )
+    ingredients = filters.CharFilter(
+        field_name='ingredients__name',
+        lookup_expr='icontains',
+        label='Фильтр по имени ингредиента'
+    )
 
     class Meta:
         model = Recipe
@@ -30,6 +36,7 @@ class RecipeFilter(filters.FilterSet):
             'tags',
             'is_favorited',
             'is_in_shopping_cart',
+            'ingredients',
         ]
 
     def filter_is_favorited(self, queryset, name, value):

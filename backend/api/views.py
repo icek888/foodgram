@@ -2,12 +2,9 @@ from django.db.models import Sum
 from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import HttpResponse
 from django.contrib.auth import get_user_model
-
 from rest_framework import status, viewsets, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.exceptions import ValidationError
-
 from djoser.views import UserViewSet
 
 from recipes.models import (
@@ -128,13 +125,13 @@ class RecipeViewSet(viewsets.ModelViewSet):
             recipe = Recipe.objects.get(pk=pk)
         except Recipe.DoesNotExist:
             return Response(
-                {"detail": "Рецепт не найден."},
+                {'detail': 'Рецепт не найден.'},
                 status=status.HTTP_404_NOT_FOUND)
 
         if not Favorite.objects.filter(user=request.user,
                                        recipe=recipe).exists():
             return Response(
-                {"detail": "Рецепт не был добавлен в избранное."},
+                {'detail': 'Рецепт не был добавлен в избранное.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -160,14 +157,13 @@ class RecipeViewSet(viewsets.ModelViewSet):
             recipe = Recipe.objects.get(pk=pk)
         except Recipe.DoesNotExist:
             return Response(
-                {"detail": "Рецепт не найден."},
+                {'detail': 'Рецепт не найден.'},
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        if not ShoppingCart.objects.filter(user=request.user,
-                                           recipe=recipe).exists():
+        if not recipe.cart.filter(user=request.user).exists():
             return Response(
-                {"detail": "Рецепт не был добавлен в корзину."},
+                {'detail': 'Рецепт не был добавлен в корзину.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -212,9 +208,15 @@ class RecipeViewSet(viewsets.ModelViewSet):
         Возвращает короткую ссылку на рецепт.
         """
         recipe = self.get_object()
-        short_link = f"https://example.com/{recipe.id}-shortlink"
+        short_link = (
+            f'{self.request.build_absolute_uri("/")}'
+            f'{recipe.id}-shortlink'
+        )
 
-        return Response({"short-link": short_link}, status=status.HTTP_200_OK)
+        return Response(
+            {'short-link': short_link},
+            status=status.HTTP_200_OK
+        )
 
 
 class CustomUserViewSet(UserViewSet):
@@ -244,14 +246,11 @@ class CustomUserViewSet(UserViewSet):
         """Создает или удаляет подписку текущего пользователя
         на выбранного автора.
         """
-        if request.user.id == int(id):
-            raise ValidationError("Вы не можете подписаться на самого себя.")
-
         try:
             author = CustomUser.objects.get(pk=id)
         except CustomUser.DoesNotExist:
             return Response(
-                {"detail": "Автор не найден."},
+                {'detail': 'Автор не найден.'},
                 status=status.HTTP_404_NOT_FOUND
             )
 
@@ -265,10 +264,9 @@ class CustomUserViewSet(UserViewSet):
             )
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-        if not Subscription.objects.filter(user=request.user,
-                                           author=author).exists():
+        if not author.subscribing.filter(user=request.user).exists():
             return Response(
-                {"detail": "Подписка на данного автора отсутствует."},
+                {'detail': 'Подписка на данного автора отсутствует.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -303,15 +301,21 @@ class CustomUserViewSet(UserViewSet):
         )
         return Response(serializer.data)
 
-    @action(methods=['PUT', 'DELETE'], detail=False,
+    @action(methods=['PUT', 'DELETE'],
+            detail=False,
             permission_classes=[permissions.IsAuthenticated],
             serializer_class=AvatarSerializer,
             url_path='me/avatar')
     def avatar(self, request):
+        """
+        Управление аватаром пользователя.
+        Позволяет загружать новый аватар (PUT) и удалять существующий (DELETE).
+        """
         user = self.request.user
-        if request.method == 'DELETE':
-            CustomUser.objects.filter(pk=user.pk).update(avatar='')
 
+        if request.method == 'DELETE':
+            if user.avatar:
+                user.avatar.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
 
         serializer = AvatarSerializer(user, data=request.data)

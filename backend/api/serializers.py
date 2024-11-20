@@ -3,8 +3,8 @@ from django.core.files.base import ContentFile
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
 from djoser.serializers import UserSerializer
+from django.conf import settings
 
-from foodgram import settings
 from users.models import CustomUser
 from recipes.models import (
     Tag,
@@ -15,6 +15,11 @@ from recipes.models import (
     Favorite,
     Subscription
 )
+
+AMOUNT_MIN = 1
+AMOUNT_MAX = 32000
+COOKING_TIME_MIN = 1
+COOKING_TIME_MAX = 32000
 
 
 class Base64ImageField(serializers.Field):
@@ -57,19 +62,19 @@ class CustomUserSerializer(UserSerializer):
         )
 
     def get_is_subscribed(self, obj):
-        user = self.context.get('request').user
+        user = self.context['request'].user
         if user.is_anonymous:
             return False
         return Subscription.objects.filter(user=user, author=obj).exists()
 
     def validate_email(self, value):
         if not value:
-            raise serializers.ValidationError("Email is required.")
+            raise serializers.ValidationError('Email is required.')
         return value
 
     def validate_username(self, value):
         if not value:
-            raise serializers.ValidationError("Username is required.")
+            raise serializers.ValidationError('Username is required.')
         return value
 
 
@@ -97,6 +102,14 @@ class IngredientRecipeGetSerializer(serializers.ModelSerializer):
 class IngredientRecipeSerializer(serializers.ModelSerializer):
     """Сериализатор для создания и обновления ингредиентов в рецепте."""
     id = serializers.IntegerField()
+    amount = serializers.IntegerField(
+        min_value=AMOUNT_MIN,
+        max_value=AMOUNT_MAX,
+        error_messages={
+            'min_value': f'Количество должно быть не менее {AMOUNT_MIN}.',
+            'max_value': f'Количество должно быть не более {AMOUNT_MAX}.'
+        }
+    )
 
     class Meta:
         model = IngredientRecipe
@@ -129,25 +142,41 @@ class RecipeGetSerializer(serializers.ModelSerializer):
         )
 
     def get_is_favorited(self, obj):
-        user = self.context.get('request').user
-        return user.is_authenticated and Favorite.objects.filter(user=user,
-                                                                 recipe=obj
-                                                                 ).exists()
+        user = self.context['request'].user
+        return user.is_authenticated and obj.favorites.filter(user=user
+                                                              ).exists()
 
     def get_is_in_shopping_cart(self, obj):
-        user = self.context.get('request').user
-        return user.is_authenticated and ShoppingCart.objects.filter(user=user,
-                                                                     recipe=obj
-                                                                     ).exists()
+        user = self.context['request'].user
+        return user.is_authenticated and obj.cart.filter(user=user
+                                                         ).exists()
 
 
 class RecipeSerializer(serializers.ModelSerializer):
-    """Сериализатор для создания и обновления рецептов."""
-    tags = serializers.PrimaryKeyRelatedField(queryset=Tag.objects.all(),
-                                              many=True)
+    """
+    Сериализатор для создания и обновления рецептов.
+    """
+    tags = serializers.PrimaryKeyRelatedField(
+        queryset=Tag.objects.all(),
+        many=True
+    )
     author = CustomUserSerializer(read_only=True)
     ingredients = IngredientRecipeSerializer(many=True)
     image = Base64ImageField(required=True)
+    cooking_time = serializers.IntegerField(
+        min_value=COOKING_TIME_MIN,
+        max_value=COOKING_TIME_MAX,
+        error_messages={
+            'min_value': (
+                f'Время приготовления должно быть не менее '
+                f'{COOKING_TIME_MIN} минут.'
+            ),
+            'max_value': (
+                f'Время приготовления должно быть не более '
+                f'{COOKING_TIME_MAX} минут.'
+            )
+        }
+    )
 
     class Meta:
         model = Recipe
@@ -163,7 +192,6 @@ class RecipeSerializer(serializers.ModelSerializer):
         )
 
     def validate(self, data):
-
         ingredients = data.get('ingredients')
         if not ingredients:
             raise serializers.ValidationError(
@@ -175,7 +203,7 @@ class RecipeSerializer(serializers.ModelSerializer):
                 Ingredient.objects.get(id=ingredient['id'])
             except Ingredient.DoesNotExist:
                 raise serializers.ValidationError(
-                    {f'Ингредиент с id{ingredient["id"]} не существует.'}
+                    {f'Ингредиент с id {ingredient["id"]} не существует.'}
                 )
 
         tags = data.get('tags')
@@ -199,11 +227,6 @@ class RecipeSerializer(serializers.ModelSerializer):
                     {'ingredients': 'Ингредиенты должны быть уникальными.'}
                 )
             unique_ingredients.add(ingredient_id)
-            amount = ingredient.get('amount')
-            if amount is None or int(amount) <= 0:
-                raise serializers.ValidationError({
-                    'Количество ингредиента должно быть больше 0.'
-                })
 
         image = data.get('image')
         if not image:
@@ -234,7 +257,7 @@ class RecipeSerializer(serializers.ModelSerializer):
         tags = validated_data.pop('tags')
         ingredients = validated_data.pop('ingredients')
         instance.tags.set(tags)
-        IngredientRecipe.objects.filter(recipe=instance).delete()
+        instance.amount_ingredients.all().delete()
         self.create_ingredients(ingredients, instance)
         super().update(instance, validated_data)
         return instance
@@ -295,6 +318,14 @@ class SubscriptionSerializer(serializers.ModelSerializer):
                 message='Вы уже подписаны на этого пользователя.'
             )
         ]
+
+    def validate(self, attrs):
+        """Проверяет, что пользователь не подписывается на самого себя."""
+        if attrs['user'] == attrs['author']:
+            raise serializers.ValidationError(
+                'Вы не можете подписаться на самого себя.'
+            )
+        return attrs
 
 
 class SubscriptionReadSerializer(CustomUserSerializer):
