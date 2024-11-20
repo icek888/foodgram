@@ -209,7 +209,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         """
         recipe = self.get_object()
         short_link = (
-            f'{self.request.build_absolute_uri("/")}'
+            f'{self.request.build_absolute_uri().rstrip("/")}/'
             f'{recipe.id}-shortlink'
         )
 
