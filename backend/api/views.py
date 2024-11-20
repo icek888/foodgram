@@ -1,4 +1,4 @@
-from django.db.models import Sum
+from django.db.models import Sum, Count
 from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import HttpResponse
 from django.contrib.auth import get_user_model
@@ -22,7 +22,7 @@ from api.permissions import IsOwnerOrReadOnly
 from api.serializers import (
     AvatarSerializer,
     TagSerializer,
-    CustomUserSerializer,
+    ProfileSerializer,
     IngredientSerializer,
     RecipeGetSerializer,
     RecipeSerializer,
@@ -224,7 +224,7 @@ class CustomUserViewSet(UserViewSet):
     с дополнительными действиями для управления подписками и загрузки аватара.
     """
     queryset = CustomUser.objects.all()
-    serializer_class = CustomUserSerializer
+    serializer_class = ProfileSerializer
     pagination_class = PageLimitPagination
     permission_classes = [permissions.AllowAny]
 
@@ -273,9 +273,10 @@ class CustomUserViewSet(UserViewSet):
         delete_object(request, id, CustomUser, Subscription)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @action(detail=False,
-            permission_classes=[permissions.IsAuthenticated],
-            methods=['get'])
+    @action(
+        detail=False,
+        permission_classes=[permissions.IsAuthenticated],
+        methods=['get'])
     def subscriptions(self, request):
         """
         Возвращает список всех авторов,
@@ -283,7 +284,12 @@ class CustomUserViewSet(UserViewSet):
         с учетом параметра `limit`.
         """
         user = request.user
-        authors = CustomUser.objects.filter(subscribing__user=user)
+
+        authors = CustomUser.objects.filter(
+            subscribing__user=user
+        ).annotate(
+            recipes_count=Count('recipes')
+        )
 
         page = self.paginate_queryset(authors)
         if page is not None:

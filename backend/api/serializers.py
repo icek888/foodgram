@@ -45,7 +45,7 @@ class AvatarSerializer(serializers.ModelSerializer):
         fields = ['avatar']
 
 
-class CustomUserSerializer(UserSerializer):
+class ProfileSerializer(UserSerializer):
     """Сериализатор для модели пользователя с полем is_subscribed."""
     is_subscribed = serializers.SerializerMethodField()
 
@@ -65,7 +65,7 @@ class CustomUserSerializer(UserSerializer):
         user = self.context['request'].user
         if user.is_anonymous:
             return False
-        return Subscription.objects.filter(user=user, author=obj).exists()
+        return obj.subscribing.filter(user=user).exists()
 
     def validate_email(self, value):
         if not value:
@@ -127,7 +127,7 @@ class TagSerializer(serializers.ModelSerializer):
 class RecipeGetSerializer(serializers.ModelSerializer):
     """Сериализатор для отображения рецептов (GET запросы)."""
     tags = TagSerializer(many=True, read_only=True)
-    author = CustomUserSerializer(read_only=True)
+    author = ProfileSerializer(read_only=True)
     ingredients = IngredientRecipeGetSerializer(many=True,
                                                 source='amount_ingredients')
     is_favorited = serializers.SerializerMethodField()
@@ -160,7 +160,7 @@ class RecipeSerializer(serializers.ModelSerializer):
         queryset=Tag.objects.all(),
         many=True
     )
-    author = CustomUserSerializer(read_only=True)
+    author = ProfileSerializer(read_only=True)
     ingredients = IngredientRecipeSerializer(many=True)
     image = Base64ImageField(required=True)
     cooking_time = serializers.IntegerField(
@@ -328,31 +328,33 @@ class SubscriptionSerializer(serializers.ModelSerializer):
         return attrs
 
 
-class SubscriptionReadSerializer(CustomUserSerializer):
-    """Сериализатор для отображения подписок с
-    поддержкой ограничения на количество рецептов."""
+class SubscriptionReadSerializer(ProfileSerializer):
+    """
+    Сериализатор для отображения подписок
+    с поддержкой ограничения на количество рецептов.
+    """
     recipes = serializers.SerializerMethodField()
-    recipes_count = serializers.SerializerMethodField()
+    recipes_count = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = CustomUser
-        fields = CustomUserSerializer.Meta.fields + ('recipes',
-                                                     'recipes_count')
+        fields = ProfileSerializer.Meta.fields + ('recipes', 'recipes_count')
 
     def get_recipes(self, obj):
-        """Возвращает рецепты автора с учетом параметра `recipes_limit`."""
+        """
+        Возвращает рецепты автора с учетом параметра `recipes_limit`.
+        """
         request = self.context.get('request')
         recipes_limit = request.query_params.get(
-            'recipes_limit', settings.REST_FRAMEWORK['PAGE_SIZE'])
-        recipes = obj.recipes.all()
+            'recipes_limit', settings.REST_FRAMEWORK['PAGE_SIZE']
+        )
 
+        recipes = obj.recipes.all()
         if recipes_limit and recipes_limit.isdigit():
             recipes = recipes[:int(recipes_limit)]
 
-        return RecipeFavoriteSerializer(recipes,
-                                        many=True,
-                                        context={'request': request}).data
-
-    def get_recipes_count(self, obj):
-        """Возвращает общее количество рецептов у автора."""
-        return obj.recipes.count()
+        return RecipeFavoriteSerializer(
+            recipes,
+            many=True,
+            context={'request': request}
+        ).data
