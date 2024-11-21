@@ -90,12 +90,7 @@
    docker compose -f docker-compose.production.yml exec backend python manage.py collectstatic --no-input
    ```
 
-8. **Наполнить базу данных ингредиентами**:
-   ```bash
-   docker compose exec backend python manage.py load_ingredients_from_csv
-   ```
-
-9. **Создать суперпользователя**:
+8. **Создать суперпользователя**:
    ```bash
    docker compose -f docker-compose.production.yml exec backend python manage.py createsuperuser
    ```
