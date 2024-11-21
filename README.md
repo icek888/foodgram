@@ -50,7 +50,7 @@
 
 2. **Перейти в директорию проекта**:
    ```bash
-   cd foodgram-project-react/backend/
+   cd foodgram/backend/
    ```
 
 3. **Создать и активировать виртуальное окружение** (для Windows):
